@@ -10,9 +10,17 @@ node = 'nodes.wavesplatform.com'# public node
 nthreads = 10
 block_with_first_asset = 236967
 
-
 def blocks_reader(seq_from, seq_to, index):
-    thread_blocks[index] = requests.get('http://%s/blocks/seq/%d/%d' % (node, seq_from, seq_to)).json()
+    response = requests.get('http://%s/blocks/seq/%d/%d' % (node, seq_from, seq_to))
+    if response.status_code == '200':
+        try:
+            thread_blocks[index] = response.json()
+            return thread_blocks[index]
+        except json.decoder.JSONDecodeError :
+           print('JSONDecodeError')
+    else:
+        print(response.status_code)
+
 
 
 last = requests.get('https://' + node + '/blocks/height').json()['height']
@@ -29,7 +37,8 @@ for n in range(int(math.ceil((last - block_with_first_asset) / (nthreads * 100))
     blocks = []
     for t in range(nthreads):
         thread[t].join()
-        blocks = blocks + thread_blocks[t]
+        if(thread_blocks[t] == list):
+            blocks = blocks + thread_blocks[t]              
     for block in reversed(blocks):
         txs = block['transactions']
         for tx in reversed(txs):
@@ -37,6 +46,7 @@ for n in range(int(math.ceil((last - block_with_first_asset) / (nthreads * 100))
             if tx['type'] == 3:
                 issue_time = time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime(tx['timestamp']/1000.))
                 issuer = tx['sender']
+                name = tx['name']
                 assetid = tx['assetId']
                 qt = tx['quantity']
                 dec = tx['decimals']
@@ -45,6 +55,7 @@ for n in range(int(math.ceil((last - block_with_first_asset) / (nthreads * 100))
                 asset_data = {
                      'issue_time': issue_time,
                      'issuer': issuer,
+                     'name':name, 
                      'assetid': assetid,
                      'qt' : qt,
                      'dec' : dec,
@@ -54,5 +65,5 @@ for n in range(int(math.ceil((last - block_with_first_asset) / (nthreads * 100))
                 assetsID.append(asset_data)
                 print(len(assetsID))
                 
-with open('..\\parse_info\\assetsInfo.json', mode='w', encoding='utf-8') as feedsjson:
+with open('parse_info\\assetsInfo.json', mode='w', encoding='utf-8') as feedsjson:
     json.dump(assetsID, feedsjson)

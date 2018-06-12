@@ -34,7 +34,7 @@ def main():
     #use public or main('127.0.0.1') waves node 
     node = 'nodes.wavesplatform.com'# public node
     
-    information = jsonRead("..\\parse_info\\assetsInfo.json")
+    information = jsonRead("parse_info\\assetsInfo.json")
     information.reverse()
     listAssetAndOwner = getAssetassetId(information)
     allURL = setURLforRq(node,listAssetAndOwner)
@@ -49,7 +49,7 @@ def main():
         except (ConnectionError, TimeoutError)as e:
                 print(e)
     
-    with open("..\\parse_info\\ownerBalanses.json", mode='w', encoding='utf-8') as feedsjson:
+    with open("parse_info\\ownerBalanses.json", mode='w', encoding='utf-8') as feedsjson:
         json.dump(ownerBalanses, feedsjson)    
 
 if __name__ == "__main__":
